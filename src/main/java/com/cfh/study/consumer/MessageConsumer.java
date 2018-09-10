@@ -10,14 +10,19 @@ import java.io.IOException;
  * @Description: 消息消费者
  */
 public class MessageConsumer {
-    private static final String QUEUE_NAME = "firstQueue";
+    static final String EXCHANGE = "fanoutExchange";
 
     public static void main(String[] args) throws Exception{
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+
+        channel.exchangeDeclare(EXCHANGE,"fanout");
+        String QUEUE_NAME = channel.queueDeclare().getQueue();//获取根据服务自动生成的队列
+        System.out.println("queue:"+QUEUE_NAME);
+        channel.queueBind(QUEUE_NAME, EXCHANGE,"");//绑定消息队列与Exchange
+
 
         Consumer consumer = new DefaultConsumer(channel) {
             @Override
