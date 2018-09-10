@@ -10,7 +10,7 @@ import java.io.IOException;
  * @Description: 消息消费者
  */
 public class MessageConsumer {
-    static final String EXCHANGE = "fanoutExchange";
+    static final String EXCHANGE = "directExchange";
 
     public static void main(String[] args) throws Exception{
         ConnectionFactory factory = new ConnectionFactory();
@@ -18,10 +18,12 @@ public class MessageConsumer {
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
-        channel.exchangeDeclare(EXCHANGE,"fanout");
+        channel.exchangeDeclare(EXCHANGE,"direct");
         String QUEUE_NAME = channel.queueDeclare().getQueue();//获取根据服务自动生成的队列
         System.out.println("queue:"+QUEUE_NAME);
-        channel.queueBind(QUEUE_NAME, EXCHANGE,"");//绑定消息队列与Exchange
+        String bindKey = "keyType2";
+        System.out.println("绑定键为："+bindKey);
+        channel.queueBind(QUEUE_NAME, EXCHANGE, bindKey);//绑定消息队列与Exchange,以及指定绑定键值
 
 
         Consumer consumer = new DefaultConsumer(channel) {
