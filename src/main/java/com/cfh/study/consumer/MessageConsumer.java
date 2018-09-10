@@ -19,14 +19,31 @@ public class MessageConsumer {
         Channel channel = connection.createChannel();
         channel.queueDeclare(QUEUE_NAME, false, false, false, null);
 
-        Consumer consumer = new DefaultConsumer(channel){
+        Consumer consumer = new DefaultConsumer(channel) {
             @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                String rec = new String(body);
-                System.out.println(rec);
-            }
-        };//创建消息的消费逻辑
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                                       byte[] body) throws IOException {
+                String message = new String(body, "UTF-8");
+                System.out.print(" [x] Received '" + message + "'");
+                try {
+                    doWork(message);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    System.out.println(" [x] Done");
+                }
 
-        channel.basicConsume(QUEUE_NAME,true,consumer);//消费者订阅消息队列
+            }
+        };
+        int precenceCount = 1;
+        channel.basicQos(precenceCount);//在消费者返回对一条消息的确认前不再对该消费者分发消息
+        boolean autoAck = true; //打开消息确认机制(在消费方发回消息处理完毕的消息后rabbitmq才将消息从消息队列移除)
+        channel.basicConsume(QUEUE_NAME, autoAck, consumer);
+    }
+
+    private static void doWork(String task) throws InterruptedException {
+        for (char ch : task.toCharArray()) {
+            if (ch == '.') Thread.sleep(1000);//根据消息中的信息模拟耗时操作
+        }
     }
 }
